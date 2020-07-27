@@ -1,0 +1,7 @@
+{
+    "host": "localhost",
+    "port": 5432,
+    "database": "discordrpg",
+    "user": "postgres",
+    "password": "drifter24"
+}
