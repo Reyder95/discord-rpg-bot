@@ -40,5 +40,8 @@ Anyone can take this code and use it to mess around. Here's how to get started.
 
   - This allows the bot to know your database credentials and connect to the database.
 
+- **Build the Database**
+  - ```startup.sql``` has the SQL code needed to build the Discord RPG database. Just run those queries against your DB.
+
 Type ```node app.js``` to run the application (make sure to add your bot to a test server or PM your bot)
 
