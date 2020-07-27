@@ -1,6 +1,7 @@
 const Discord = require('discord.js');    // Import Discord.js
 const client = new Discord.Client();    // Create a new client
 const commands = require('./commands');
+require('dotenv').config();
 
 // When the client is ready, log to the console
 client.on('ready', () => {
@@ -25,4 +26,4 @@ client.on('message', msg => {
         .catch(error => console.log(`An error has occurred. Error: ${error}.`));
 });
 
-client.login('NzM1NDk0OTE5NDEzNTYzMzk0.XxhFFA.TfuJTLhIc8hHixirBZ8QakBOIP4');
+client.login(process.env.BOT_TOKEN);

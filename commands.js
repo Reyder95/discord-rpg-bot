@@ -42,7 +42,7 @@ const commands = {
             {name: 'Armor', value: 35, inline: true},
             {name: 'Strength', value: 15, inline: true},
             {name: 'Dexterity', value: 8, inline: true},
-            {name: 'Intelligence', value: 10, inline:true}
+            {name: 'Intelligence', value: 10, inline:true}  
         )
 
         // Create an embed message that shows the gear of the user

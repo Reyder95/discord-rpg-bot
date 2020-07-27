@@ -12,6 +12,7 @@
   "dependencies": {
     "bluebird": "^3.7.2",
     "discord.js": "^12.2.0",
+    "dotenv": "^8.2.0",
     "pg-promise": "^10.5.8",
     "pgpromise": "^0.1.1"
   }
