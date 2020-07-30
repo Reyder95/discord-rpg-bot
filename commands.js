@@ -1,6 +1,10 @@
 const Discord = require('discord.js');
 const database = require('./database');
 const stats = require('./stat_formulas');
+const Items = require('./items');
+const Gear = require('./gear/');
+const Player = require('./otherclasses/Player');
+const Weapons = require('./weapons/');
 
 const commands = {
     /**
@@ -10,7 +14,7 @@ const commands = {
 
      help: async(msg) => {
          const embed = new Discord.MessageEmbed()
-         .setTitle('Discord RPG Help')
+         .setTitle('Akuma RPG Help')
          .setDescription('The bot\'s prefix is \'r!\' for each of these commands')  
          .addFields(
              {name: 'register', value: 'Allows you to register your discord account with the bot.'},
@@ -36,7 +40,7 @@ const commands = {
         // Insert the user into the database if they do not already exist
         database.registerUser(msg.author.id)
         .then(() => {
-            msg.reply(`You have successfully registered for Discord RPG.`);    // Reply to them saying they have successfully registered
+            msg.reply(`You have successfully registered for Akuma RPG.`);    // Reply to them saying they have successfully registered
             
         })
         .catch(() => {
@@ -60,6 +64,7 @@ const commands = {
         msg.channel.send(embed)
     },
 
+    // Allow the user to view their stats
     stats: async(msg) => {
         const embed = new Discord.MessageEmbed()
         .setTitle(`${msg.author.username}'s Stats`)
@@ -74,15 +79,18 @@ const commands = {
         )
         .setColor('#7C3BA1')
 
-            msg.channel.send(embed);
+        msg.channel.send(embed);
+
     },
 
+    // Allow the user to view their gear
     gear: async(msg, client, args) => {
 
         let equipment = {
             head: "God Helmet"
         }
     
+        // If no arguments, display the gear list
         if (args[1] === undefined) {
             // Create an embed message that shows the gear of the user
             const embed = new Discord.MessageEmbed()
@@ -105,6 +113,8 @@ const commands = {
             
             msg.channel.send(embed);
         }
+
+        // If an argument is presented, check if it's valid, then inspect the item at that given slot
         else {
 
             if (equipment[args[1]] !== undefined) {
@@ -122,17 +132,16 @@ const commands = {
 
     // Have a player view their inventory
     inventory: async(msg, client) => {
+        let inventory = [];
+
         const embed = new Discord.MessageEmbed()
         .setTitle(`${msg.author.username}'s Inventory`)
         .setDescription('20 Slots Remaining | Small Backpack')
-        .addField('[1] Harpoon', 'Strong weapon used also as a way to catch fish (I think lol wtf)')
-        .addField('[2] Chainmail Leggings', 'Very sturdy armor used by infantry to take quite a beating.')
-        .addField('[3] Kraznir', 'Incredible blade wielded by the gods. Incinerates all that stand in its way. Can bake a MEAN pie though.')
-        .addField('[4] Wooden Spear', 'A simple spear, good for starting out.')
 
         msg.channel.send(embed)
     },
 
+    // Allow the player to view the map
     map: async(msg, client, args) => {
         if (args[1] == null)
             msg.channel.send(`View world map`);
@@ -140,10 +149,24 @@ const commands = {
             msg.channel.send(`View areas in ${args[1]}`);
     },
 
+    // Initiate a fight
     fight: async(msg, client) => {
-        msg.channel.send(`Fight an enemy!`);
+        let playerGear = []
+        
+        let playerWeapons = {
+            left: new Weapons["WoodenRapier"]
+        }
+
+        playerGear.push(new Gear["WoodenHelmet"]());
+        playerGear.push(new Gear["IronChestplate"]());
+
+        let player = new Player(250, 250, playerGear, playerWeapons, 10);
+
+
+        player.Attack('bob')
     },
 
+    // Allow a player to make a choice in a fight
     choice: async(msg, client) => {
         msg.channel.send(`Make a fighting choice!`);
     },
@@ -153,6 +176,7 @@ const commands = {
     }
 }
 
+// Run the command based on the comName given
 const run = async (comName, msg, client) => {
     console.log(`Command: ${comName} | User ID: ${client.user.id}`);
 
