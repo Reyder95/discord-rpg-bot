@@ -5,6 +5,8 @@ const Items = require('./items');
 const Gear = require('./gear/');
 const Player = require('./otherclasses/Player');
 const Weapons = require('./weapons/');
+const Enemies = require('./enemies/');
+const FightController = require('./otherclasses/FightController');
 
 const commands = {
     /**
@@ -162,8 +164,13 @@ const commands = {
 
         let player = new Player(250, 250, playerGear, playerWeapons, 10);
 
+        let enemies = []
 
-        player.Attack('bob')
+        enemies.push(new Enemies["Goblin"]());
+
+        let fightController = new FightController(player, enemies, msg);
+
+        fightController.Initiate();
     },
 
     // Allow a player to make a choice in a fight

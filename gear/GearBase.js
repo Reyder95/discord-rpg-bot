@@ -19,4 +19,8 @@ module.exports = class GearBase {
             bonus: this.statBonus
         }
     }
+    
+    getArmorBonus() {
+        return this.armorBonus;
+    }
 }
