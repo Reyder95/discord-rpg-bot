@@ -7,6 +7,10 @@ const Player = require('./otherclasses/Player');
 const Weapons = require('./weapons/');
 const Enemies = require('./enemies/');
 const FightController = require('./otherclasses/FightController');
+const Spells = require('./spells/');
+const MySpell = require('./otherclasses/SpellBook');
+
+const fights = {};
 
 const commands = {
     /**
@@ -153,24 +157,37 @@ const commands = {
 
     // Initiate a fight
     fight: async(msg, client) => {
-        let playerGear = []
+        if (!fights[msg.author.id]) {
+            let playerGear = []
+            let knownSpells = [];
         
-        let playerWeapons = {
-            left: new Weapons["WoodenRapier"]
+            let playerWeapons = {
+                left: new Weapons["WoodenRapier"]
+            }
+    
+            playerGear.push(new Gear["WoodenHelmet"]());
+            playerGear.push(new Gear["IronChestplate"]());
+
+            knownSpells.push(new Spells["Fireball"]());
+            knownSpells.push(new Spells["Iceshot"]());
+
+            let userSpellBook = new MySpell(knownSpells);
+    
+            let player = new Player(250, 250, playerGear, playerWeapons, 10, userSpellBook, 25, 100);
+    
+            let enemies = []
+    
+            enemies.push(new Enemies["Goblin"]());
+            enemies.push(new Enemies["Goblin"]());
+            enemies.push(new Enemies["Goblin"]());
+    
+            let fightController = new FightController(player, enemies, msg);
+
+            fights[msg.author.id] = fightController.Initiate()
+            .then(() => {
+                delete fights[msg.author.id];
+            })
         }
-
-        playerGear.push(new Gear["WoodenHelmet"]());
-        playerGear.push(new Gear["IronChestplate"]());
-
-        let player = new Player(250, 250, playerGear, playerWeapons, 10);
-
-        let enemies = []
-
-        enemies.push(new Enemies["Goblin"]());
-
-        let fightController = new FightController(player, enemies, msg);
-
-        fightController.Initiate();
     },
 
     // Allow a player to make a choice in a fight

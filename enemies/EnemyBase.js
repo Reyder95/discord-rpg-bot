@@ -34,11 +34,13 @@ module.exports = class EnemyBase {
     }
 
     Attack(player) {
-        return player.TakeDamage(this.weaponAttack)
+        let lowerBound = Math.sqrt(this.weaponAttack) + (3 / 4) * this.weaponAttack;
+        let randAttack = Math.random() * (this.weaponAttack - lowerBound) + lowerBound
+        return player.TakeDamage(randAttack)
     }
 
     TakeDamage(damage) {
-        let damageDone = Math.floor(damage - (this.armor / 2));
+        let damageDone = Math.floor(damage * (100 / (100 + this.armor)));
 
         this.currHealth -= damageDone;
 

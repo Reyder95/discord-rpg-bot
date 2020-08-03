@@ -1,7 +1,5 @@
 // The controller that handles combat between players and monsters
 
-const Discord = require('discord.js')
-
 // Handles the different states battle can be in
 const STATES = {
     PLAYER: 0,
@@ -18,6 +16,7 @@ module.exports = class FightController {
         this.state = null;    // State of the fight, starts at null. Goes between PLAYER and ENEMY until the player wins or loses, then it goes to WIN or LOSE states.
         this.msg = msg;    // We pass in the msg object from discord to display things to the user
         this.enemiesDead = 0;    // Enemy death counter. If this matches the # of enemies there are, we win the fight.
+        this.botMsg = null;
 
         // Display object. Helps us neatly display all the things the user has to know during the fight
         this.display = {   
@@ -34,8 +33,16 @@ module.exports = class FightController {
 
     // Initiates the battle. All this does is call the CombatLoop() function, but it's a nice "naming convention" to initiate a battle. Will probably add some sort of
     // "Battle Commenced" embed here.
-    Initiate() {
-        this.CombatLoop()
+    async Initiate() {
+        return new Promise((resolve, reject) => {
+            let result;
+            result = this.CombatLoop()
+
+            if (result)
+                resolve(result)
+            else
+                reject(result)
+        })
     }
 
     // Handles the entirety of combat. Everything happens here until one side is declared a winner
@@ -51,12 +58,19 @@ module.exports = class FightController {
 
             // If it is player's state ...
             if (this.state == 0) {
-                await this.DisplayCombat();    // Display the combat information
+                await this.DisplayCombat()    // Display the combat information
+                .catch(err => {
+                    console.log("Error: " + err)
+                })
                 await this.PlayerTurn()    // Allow the player to do their turn
                 .then(async res => {
                     switch(res.choice) {
                         case 'basicAttack':
                             await this.BasicAttack();
+                            break;
+                        case 'spellBook':
+                            await this.SpellBook();
+                            break;
                     }
                 })
             }
@@ -65,7 +79,7 @@ module.exports = class FightController {
         }
 
         if (this.state == 2) {
-            this.display.actionsTaken += `\n${this.msg.author.username} killed all of the enemies.`;
+            this.display.actionsTaken += `\n+ ${this.msg.author.username} killed all of the enemies.`;
             this.DisplayCombat();
             this.msg.reply('Congratulations, you won the fight!')
         }
@@ -103,10 +117,10 @@ module.exports = class FightController {
     }
 
     // Displays all the information the player needs to know
-    DisplayCombat() {
+    async DisplayCombat() {
 
         // Displays the player's states (Health and Armor for now)
-        this.display.playerStats = "# Your Stats\n\n" +
+        this.display.playerStats = "# Player Stats\n\n" +
                                    `<Health> ${this.player.getCurrentHealth()} / ${this.player.getMaximumHealth()}\n` +
                                    `<Armor> ${this.player.getArmor()}\n`;
 
@@ -120,35 +134,46 @@ module.exports = class FightController {
 
         this.display.creatures += this.DisplayEnemies();    // Add all f these creatures to the display object
 
+        let hi;
+
         // Output the display completely
-        this.msg.channel.send("```md\n" + this.display.playerStats + this.display.creatures + this.display.actionsTaken + "\n\n" + this.display.chooseAction + "```\nType `choose #` to choose an option.");
+        if (!this.botMsg)
+            this.botMsg = await this.msg.channel.send(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.\n\`\`\` Please note you must unreact and re-react to the message for it to work\`\`\``)
+        else
+            this.botMsg.edit(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.\n\`\`\` Please note you must unreact and re-react to the message for it to work\`\`\``);
     }
 
     // Allows the player to choose an action on their turn
-    async PlayerTurn() {
+    async PlayerTurn(choice) {
 
         // Promise to send back so the bot waits for this promise
         return new Promise((resolve, reject) => {
 
+            this.botMsg.react('1️⃣');
+            this.botMsg.react('2️⃣');
+            this.botMsg.react('3️⃣');
+            this.botMsg.react('4️⃣');
+
             // Filter to only allow messages with "choose" to pass through, as well only working for the person who originally initiated the fight
-            const filter = m => m.content.includes('choose') && m.author.id === this.msg.author.id;
+            const filter = (reaction, user) => {
+                return (reaction.emoji.name === '1️⃣' || reaction.emoji.name === '2️⃣' || reaction.emoji.name === '3️⃣' || reaction.emoji.name === '4️⃣') && user.id === this.msg.author.id
+            }
 
             // Sets up a collector with the above filter so we can collect the player's inputs
-            const collector = this.msg.channel.createMessageCollector(filter, { time: 900000 })
+            const collector = this.botMsg.createReactionCollector(filter, { time: 900000 })
     
             // When a message is sent, run this command
-            collector.on('collect', m => {
-                let choices = m.content.split(' ');    // Split "choices" up as an array by space. The actual # chosen should be choices[1]
+            collector.on('collect', (reaction, user) => {
 
                 let result;    // Basic result variale for the promise
                 
                 // Switch statement determining which choice the player made
-                switch(choices[1]) {
-                    case '1':    // If the player wants to basic attack
+                switch(reaction.emoji.name) {
+                    case '1️⃣':    // If the player wants to basic attack
                         result = {choice: 'basicAttack'};
                         break;
-                    case '2':    // If the player wants to view and use a spell in their spellbook
-                        collector.stop();
+                    case '2️⃣':    // If the player wants to view and use a spell in their spellbook
+                        result = {choice: 'spellBook'};
                         break;
                     case '3':    // If the player wants to view and use an item
                         collector.stop();
@@ -158,6 +183,7 @@ module.exports = class FightController {
                         break;
                 }
 
+                console.log(result)
                 // If we get a successful result, resolve the promise
                 if (result)
                     resolve(result);
@@ -171,43 +197,82 @@ module.exports = class FightController {
     BasicAttack() {
         
         return new Promise((resolve, reject) => {
-            this.msg.channel.send('Choose the number of the enemy you\'d like to attack. [choose #]');
+            if (this.enemies.length > 1) {
+                this.botMsg.edit(`\`\`\`md\n${this.DisplayEnemies()}\n\n# Please select the # of the enemy you would like to attack.\`\`\``)
 
-            // Basic filter for "choose" yada yada we know this already
-            const filter = m => m.content.includes('choose') && m.author.id === this.msg.author.id;
-            let result;
-
-            const collector = this.msg.channel.createMessageCollector(filter, { time: 900000 })
-
-            collector.on('collect', m => {
-                let choices = m.content.split(' ');
-                result = choices;
-                // If our choice is a proper choice
-                if (choices[1] <= this.enemies.length) {
-                    let damageDone = this.player.Attack(this.enemies[choices[1] - 1]);    // Get the proper damage done
-
-                    // Add to the actions taken
-                    this.display.actionsTaken += `\n+ ${this.msg.author.username} dealt ${damageDone} damage to ${this.enemies[choices[1] - 1].getName()}`
-
-                    // Increment death counter if the enemy died
-                    if (this.enemies[choices[1] - 1].getCurrentHealth() <= 0)
-                        this.enemiesDead++;
+                const filter = (reaction, user) => {
+                    return (reaction.emoji.name === '1️⃣' || reaction.emoji.name === '2️⃣' || reaction.emoji.name === '3️⃣' || reaction.emoji.name === '4️⃣') && user.id === this.msg.author.id
                 }
-                    
+    
+                let result;
+    
+                // Sets up a collector with the above filter so we can collect the player's inputs
+                const collector = this.botMsg.createReactionCollector(filter, { time: 900000 })
+    
+                collector.on('collect', (reaction, user) => {
+                        let damageDone = this.player.Attack(this.enemies[parseInt(reaction.emoji.name) - 1]);    // Get the proper damage done
+    
+                        // Add to the actions taken
+                        this.display.actionsTaken += `\n+ ${this.msg.author.username} dealt ${damageDone} damage to ${this.enemies[parseInt(reaction.emoji.name) - 1].getName()}`
+    
+                        // Increment death counter if the enemy died
+                        if (this.enemies[parseInt(reaction.emoji.name) - 1].getCurrentHealth() <= 0)
+                            this.enemiesDead++;
+                        
+                        result = {yes: 'ok '}
+    
+                    collector.stop();
+                })
 
-                collector.stop();
-            })
+                // When the collector ends, go back to the combat loop
+                collector.on('end', m => {
+                    if (result)
+                        resolve(result)
+                    else
+                        reject("No action taken!")
+                })
+            } else {
+                let damageDone = this.player.Attack(this.enemies[0]);    // Get the proper damage done
+    
+                // Add to the actions taken
+                this.display.actionsTaken += `\n+ ${this.msg.author.username} dealt ${damageDone} damage to ${this.enemies[0].getName()}`
+                // Increment death counter if the enemy died
+                if (this.enemies[0].getCurrentHealth() <= 0)
+                    this.enemiesDead++;
 
-            // When the collector ends, go back to the combat loop
-            collector.on('end', m => {
-                if (result)
-                    resolve(result)
-                else
-                    reject("No action taken!")
-            })
+                    resolve({yes: 'ok'})
+            }
+            
+            
+
+            
         })
             
         
+    }
+
+    SpellBook() {
+        return new Promise((resolve, reject) => {
+            let result;
+            result = this.player.getSpellBook().Open(this.botMsg, true, this.msg);
+
+            const filter = (reaction, user) => {
+                return (reaction.emoji.name === '1️⃣' || reaction.emoji.name === '2️⃣' || reaction.emoji.name === '3️⃣' || reaction.emoji.name === '4️⃣') && user.id === this.msg.author.id
+            }
+
+            // Sets up a collector with the above filter so we can collect the player's inputs
+            const collector = this.botMsg.createReactionCollector(filter, { time: 900000 })
+    
+            // When a message is sent, run this command
+            collector.on('collect', async (reaction, user) => {
+                await this.player.getSpellBook().CastSpell(parseInt(reaction.emoji.name) - 1, this.enemies, this.botMsg, this.player)
+            })
+
+            if (result)
+                resolve(result);
+            else
+                reject(result);
+        })
     }
 
     DisplayEnemies() {
