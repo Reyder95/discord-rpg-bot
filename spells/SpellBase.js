@@ -1,10 +1,11 @@
 module.exports = class SpellBase {
-    constructor(name, description, msg, type, spellpower) {
+    constructor(name, description, msg, type, spellpower, magickaCost) {
         this.name = name;
         this.description = description;
         this.msg = msg;
         this.type = type;
         this.spellpower = spellpower;
+        this.magickaCost = magickaCost;
     }
 
     getName() {
@@ -23,5 +24,21 @@ module.exports = class SpellBase {
         return this.type;
     }
 
-    Use(user, target) {}
+    getMagickaCost() {
+        return this.magickaCost;
+    }
+
+    // Use the spell
+    Use(user, target) {
+        return new Promise((resolve, reject) => {
+            user.UseMagicka(this.magickaCost);
+            let result = user.MagicAttack(target, this.spellpower);
+
+            if (result)
+                resolve(result)
+            else
+                reject("nope");
+        })
+        
+    }
 }

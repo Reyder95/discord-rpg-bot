@@ -1,16 +1,16 @@
 // Base class for all enemy types.
 
 module.exports = class EnemyBase {
-    constructor(name, description, stats, level, armor, currHealth, weaponAttack, maxHealth, rarity) {
+    constructor(name, description, level, armor, currHealth, weaponAttack, maxHealth, rarity, spellresist) {
         this.name = name;
         this.description = description;
         this.armor = armor;
         this.maxHealth = maxHealth;
         this.currHealth = currHealth;
-        this.stats = stats;
         this.level = level;
         this.weaponAttack = weaponAttack;
         this.rarity = rarity;
+        this.spellresist = spellresist;
     }
 
     getName() {
@@ -42,6 +42,18 @@ module.exports = class EnemyBase {
     TakeDamage(damage) {
         let damageDone = Math.floor(damage * (100 / (100 + this.armor)));
 
+        this.currHealth -= damageDone;
+
+        if (this.currHealth <= 0)
+            this.currHealth = 0;
+
+        return damageDone;
+    }
+
+    TakeMagicDamage(damage) {
+        
+        let damageDone = Math.floor(damage * (100 / (100 + this.spellresist)));
+        
         this.currHealth -= damageDone;
 
         if (this.currHealth <= 0)

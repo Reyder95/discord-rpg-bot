@@ -1,7 +1,7 @@
 // The player character for use in combat
 
 module.exports = class Player {
-    constructor(maxHealth, currHealth, gear, weapons, level, spellbook, spellresist, magicka) {
+    constructor(maxHealth, currHealth, gear, weapons, level, spellbook, spellresist, currentMagicka, maximumMagicka) {
 
         // A player's complete list of stats
         this.stats = {
@@ -13,7 +13,8 @@ module.exports = class Player {
             armor: 0,    // Helps reduce the damage the user takes
             spellbook: spellbook,    // A spellbook which contains all the spells the user knows
             spellresist: spellresist,    // Helps prevent the user from taking too much damage from magical attacks
-            magicka: magicka    // Each spell costs magicka to cast
+            currentMagicka: currentMagicka,    // Each spell costs magicka to cast
+            maximumMagicka: maximumMagicka    // The maximum magicka the user can have
 
         }
 
@@ -45,25 +46,52 @@ module.exports = class Player {
         return this.stats.spellbook;
     }
 
+    getCurrentMagicka() {
+        return this.stats.currentMagicka;
+    }
+
+    getMaximumMagicka() {
+        return this.stats.maximumMagicka;
+    }
+
+    // Use a certain amount of magicka based on spell cost
+    UseMagicka(cost) {
+        this.stats.currentMagicka -= cost;
+    }
+
     // Attack a given entity
     Attack(enemy) {
 
         // TODO: Add possibilities for effects
 
+        // Calculate the damage of a weapon
         let weaponAttack = (this.weapons.left != undefined ? this.weapons.left.getAttack() + this.stats[this.weapons.left.getStat()] / 2 : 0) + (this.weapons.right != undefined ? this.weapons.right.getAttack() + this.stats[this.weapons.left.getStat()] / 2 : 0)
         
+        // Calculate the lower bound
         let lowerBound = Math.sqrt(weaponAttack) + (3 / 4) * weaponAttack;
+
+        //  Calculate a random damage value within the lower and upper bounds.
         let randAttack = Math.random() * (weaponAttack - lowerBound) + lowerBound
 
-        
+        // Have the enemy take damage with the given attack.
         return enemy.TakeDamage(randAttack)
     }
 
     // When given damage, use this formula to calculate the damage taken
     TakeDamage(damage) {
+
+        // Calculate the actual damage taken based on armor
         let totalDamage = Math.floor(damage - (this.stats.armor / 2));
+
+        // Reduce user health
         this.stats.currHealth -= totalDamage;
 
+        // Return damage dealt
         return totalDamage;
+    }
+
+    // Magic Attack Damage (work in progress function)
+    MagicAttack(target, spellPower) {
+        return target.TakeMagicDamage(spellPower);
     }
 }

@@ -17,5 +17,6 @@ module.exports = class Goblin extends require('./EnemyBase') {
         this.level = 2;
         this.weaponAttack = 15 + this.stats["strength"] / 2
         this.rarity = 'Common';
+        this.spellresist = 23;
     }
 }

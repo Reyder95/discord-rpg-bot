@@ -173,20 +173,24 @@ const commands = {
 
             let userSpellBook = new MySpell(knownSpells);
     
-            let player = new Player(250, 250, playerGear, playerWeapons, 10, userSpellBook, 25, 100);
+            let player = new Player(250, 250, playerGear, playerWeapons, 10, userSpellBook, 25, 300, 300);
     
             let enemies = []
     
-            enemies.push(new Enemies["Goblin"]());
-            enemies.push(new Enemies["Goblin"]());
-            enemies.push(new Enemies["Goblin"]());
+            enemies.push(new Enemies["Goblin"]("Goblin", "test", 2, 200, 5, 200, "common"));
     
             let fightController = new FightController(player, enemies, msg);
+            
+            fights[msg.author.id] = fightController;
 
-            fights[msg.author.id] = fightController.Initiate()
+            fights[msg.author.id].Initiate()
             .then(() => {
                 delete fights[msg.author.id];
             })
+        }
+        else {
+            fights[msg.author.id].Show();
+            msg.reply(`Your current fight:`)
         }
     },
 
