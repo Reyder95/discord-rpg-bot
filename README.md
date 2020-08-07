@@ -1,6 +1,9 @@
 # Discord RPG
 Welcome to my first Discord bot! This bot is really just for me to tinker with things, but on the off chance people like the bot I'll decide to do more with it.
 
+## Useful Links
+- [Trello Roadmap](https://trello.com/b/9392DnNJ/akuma-rpg-roadmap)
+
 ## Running The Bot
 Anyone can take this code and use it to mess around. Here's how to get started.
 
