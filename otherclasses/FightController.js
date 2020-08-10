@@ -1,7 +1,5 @@
 // The controller that handles combat between players and monsters
-
 const Discord = require('discord.js')
-const helpers = require('../helper');
 const helper = require('../helper');
 
 // Handles the different states battle can be in
@@ -9,7 +7,8 @@ const STATES = {
     PLAYER: 0,
     ENEMY: 1,
     WIN: 2,
-    LOSE: 3
+    LOSE: 3,
+    RUN: 4
 }
 
 module.exports = class FightController {
@@ -46,7 +45,7 @@ module.exports = class FightController {
     }
 
     // Initiates the battle. All this does is call the CombatLoop() function, but it's a nice "naming convention" to initiate a battle. Will probably add some sort of
-    // "Battle Commenced" embed here.
+    // "Battle Commenced" thing here
     async Initiate() {
         return new Promise((resolve, reject) => {
             let result;
@@ -72,7 +71,7 @@ module.exports = class FightController {
         let noMagicka = false;    // If the user doesn't have enough magicka for the previous spell they tried to use
 
         // While nobody has lost or won, continue looping
-        while (this.state != 2 && this.state != 3) {
+        while (this.state != STATES.LOSE && this.state != STATES.WIN && this.state != STATES.RUN) {
 
             // We don't want to change state if we're moving back to this window from somewhere else. (showing the window or hitting the back button)
             if (!back && !show) {
@@ -82,7 +81,9 @@ module.exports = class FightController {
             back = false;    // Always double check back is set to false after NextState
 
             // If it is player's state ...
-            if (this.state == 0) {
+            if (this.state == STATES.PLAYER) {
+
+
 
                 await this.DisplayCombat(noMagicka)    // Display the combat information
                 .catch(err => {
@@ -110,6 +111,8 @@ module.exports = class FightController {
                                 // If the user didn't press the back button
                                 if (res != 'back') {
 
+                                    
+
                                     // Cast a particular spell that was chosen earlier
                                     let spellObject = await this.player.getSpellBook().CastSpell(res, this.enemies, this.botMsg, this.msg, this.player)
                                     .catch(err => {
@@ -124,7 +127,7 @@ module.exports = class FightController {
                                         this.display.actionsTaken += `\n+ ${this.msg.author.username} casted ${spellObject.spellName} and dealt ${spellObject.damageDone} damage.`
                                     
                                         // If enemy died, increase death counter
-                                        if (this.enemies[spellObject.target].getCurrentHealth() == 0)
+                                        if (this.enemies[spellObject.target].getStats().currHealth == 0)
                                             this.enemiesDead++;
                                     }
                                     
@@ -134,10 +137,25 @@ module.exports = class FightController {
                                 }
                             })
                             break;
+
+                        case 'item':
+                            await this.Item()
+                            .then(() => {
+                                console.log(`Item done!`)
+                            })
+                            break;
+                    
+                        case 'run':    // We want to run away
+                            await this.Run()
+                            .then(() => {
+                                console.log(`State: ${this.state}`)
+                            })
+                            break;
                     }
                 })
                 .catch(err => {
                     // If we want to show the combat again, ending the collector will always bring us here (this is why we set this.show to true or false)
+                    console.log(err)
 
                     // If we don't want to show anything
                     if (!this.show)
@@ -147,22 +165,26 @@ module.exports = class FightController {
                         back = true    // If we're just re-displaying the window we don't want any actions to happen so we set this to true
                 })
             }
-            else if (this.state == 1)    // Else if it's the enemy's turn
+            else if (this.state == STATES.ENEMY)    // Else if it's the enemy's turn
                 
                 await this.EnemyTurn();    // Allow the enemy to do their turn
         }
 
         // If we won, display that we killed all of the enemies.
-        if (this.state == 2) {
+        if (this.state == STATES.WIN) {
             this.display.actionsTaken += `\n+ ${this.msg.author.username} killed all of the enemies.`;
             this.DisplayCombat();
             this.msg.reply('Congratulations, you won the fight!')
         }
 
         // If we lost, say that we died.
-        else if (this.state == 3) {
+        else if (this.state == STATES.LOSE) {
             this.msg.reply('You died!')
         }
+
+        // If we are running
+        else if (this.state == STATES.RUN)
+            this.msg.reply(`You've successfully run from the fight`)
 
     }
 
@@ -170,7 +192,7 @@ module.exports = class FightController {
     NextState() {
         
         // If nobody has died yet and the fight is still going on, transfer state between player and enemies
-        if (this.enemiesDead < this.enemies.length && this.player.getCurrentHealth() > 0) {
+        if (this.enemiesDead < this.enemies.length && this.player.getStats().currHealth > 0) {
             switch(this.state) {
                 case null:
                     this.state = STATES.PLAYER
@@ -186,7 +208,7 @@ module.exports = class FightController {
         else {
 
             // If the player died, set the state to lose
-            if (this.player.getCurrentHealth() <= 0)
+            if (this.player.getStats().currHealth <= 0)
                 this.state = STATES.LOSE;
 
             // If the enemy died, set the state to win
@@ -203,9 +225,9 @@ module.exports = class FightController {
 
         // Displays the player's states (Health and Armor for now)
         this.display.playerStats = "# Player Stats\n\n" +
-                                   `<Health> ${this.player.getCurrentHealth()} / ${this.player.getMaximumHealth()}\n` +
-                                   `<Armor> ${this.player.getArmor()}\n` +
-                                   `<Magicka> ${this.player.getCurrentMagicka()} / ${this.player.getMaximumMagicka()}\n`;
+                                   `<Health> ${this.player.getStats().currHealth} / ${this.player.getStats().maxHealth}\n` +
+                                   `<Armor> ${this.player.getStats().armor}\n` +
+                                   `<Magicka> ${this.player.getStats().currentMagicka} / ${this.player.getStats().maximumMagicka}\n`;
 
         // Displays the enemies that the player is fighting
         this.display.creatures = `\n# ${this.enemies.length} Creatures Appear\n\n`
@@ -226,12 +248,12 @@ module.exports = class FightController {
             this.show = false;    // We want to default set this to false when we're done with it
             
             // If this is our first message or we want to resend the message, create a new message
-            this.botMsg = await this.msg.channel.send(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.\n\`\`\` Please note you must unreact and re-react to the message for it to work\`\`\``)
+            this.botMsg = await this.msg.channel.send(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.`)
         }
         else
 
             // Otherwise, just edit the current message
-            this.botMsg.edit(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.\n\`\`\` Please note you must unreact and re-react to the message for it to work\`\`\``);
+            this.botMsg.edit(`\`\`\`md\n# ${this.msg.author.username}'s Battle\n\n\n${this.display.playerStats} ${this.display.creatures} ${this.display.actionsTaken} \n\n${this.display.chooseAction}\`\`\`\nReact with the choice below to choose an option.`);
     }
 
     // Allows the player to choose an action on their turn
@@ -265,7 +287,7 @@ module.exports = class FightController {
                         await helper.removeReaction(this.msg.author.id, this.botMsg, '1️⃣')
                         .then(() => {
                             result = {choice: 'basicAttack'};
-                        })
+                        });
                         break;
 
                     case '2️⃣':    // If the player wants to view and use a spell in their spellbook
@@ -275,16 +297,27 @@ module.exports = class FightController {
                         await helper.removeReaction(this.msg.author.id, this.botMsg, '2️⃣')
                         .then(() => {
                             result = {choice: 'spellBook'};
-                        })
+                        });
 
                         break;
 
                     case '3️⃣':
-                        this.collector.stop();
+                        this.botMsg.edit('Chose to use an item');
+
+                        await helper.removeReaction(this.msg.author.id, this.botMsg, '3️⃣')
+                        .then(() => {
+                            result = {choice: 'item'}
+                        })
                         break;
 
-                    case '4':    // If the player wants to run entirely from the fight
-                        this.collector.stop();
+                    case '4️⃣':    // If the player wants to run entirely from the fight
+                        this.botMsg.edit('Chose to Run');
+
+                        // Remove the reaction and then return the promise
+                        await helper.removeReaction(this.msg.author.id, this.botMsg, '4️⃣')
+                        .then(() => {
+                            result = {choice: 'run'}
+                        });
                         break;
                 }
 
@@ -301,6 +334,8 @@ module.exports = class FightController {
             })
         })
     }
+
+    // --- The functions that handle each different combat choice
 
     // Allow the user to basic attack an enemy of their choice
     BasicAttack() {
@@ -323,7 +358,7 @@ module.exports = class FightController {
                         this.display.actionsTaken += `\n+ ${this.msg.author.username} dealt ${damageDone} damage to ${this.enemies[parseInt(reaction.emoji.name) - 1].getName()}`
     
                         // Increment death counter if the enemy died
-                        if (this.enemies[parseInt(reaction.emoji.name) - 1].getCurrentHealth() <= 0)
+                        if (this.enemies[parseInt(reaction.emoji.name) - 1].getStats().currHealth <= 0)
                             this.enemiesDead++;
                         
                         result = {yes: 'ok '}    // Random result to always resolve a promise at this state
@@ -344,7 +379,7 @@ module.exports = class FightController {
                 // Add to the actions taken
                 this.display.actionsTaken += `\n+ ${this.msg.author.username} dealt ${damageDone} damage to ${this.enemies[0].getName()}`
                 // Increment death counter if the enemy died
-                if (this.enemies[0].getCurrentHealth() <= 0)
+                if (this.enemies[0].getStats().currHealth <= 0)
                     this.enemiesDead++;
 
                     resolve({yes: 'ok'})
@@ -360,6 +395,7 @@ module.exports = class FightController {
 
     // Function to handle when the user chooses the spellbook
     SpellBook() {
+        
         return new Promise((resolve, reject) => {
             let result;    // Variable to hold promise result
             this.player.getSpellBook().Open(this.botMsg, true, this.msg, this.player);    // Open the player's spellbook
@@ -405,9 +441,17 @@ module.exports = class FightController {
     // Function for handling if the player chooses item
     Item() {
         return new Promise((resolve, reject) => {
-            this.botMsg.edit('Chose `Item`')
+            console.log('in item')
 
-            resolve(result)
+            resolve('hi')
+        })
+    }
+
+    Run() {
+        return new Promise((resolve, reject) => {
+            this.state = STATES.RUN;
+
+            resolve({choice: 'running'})
         })
     }
 
@@ -420,7 +464,7 @@ module.exports = class FightController {
 
         // For each enemy in our array, display them properly with their rarity, HP, name, and level
         for (let i = 0; i < this.enemies.length; i++)
-            creatures += `${i+1}. [${this.enemies[i].getName()}](${this.enemies[i].getRarity()}) [Level ${this.enemies[i].getLevel()}]\n- Health: ${this.enemies[i].getCurrentHealth()} / ${this.enemies[i].getMaximumHealth()} ${this.enemies[i].getCurrentHealth() <= 0 ? '[DEAD]' : ''}\n`
+            creatures += `${i+1}. [${this.enemies[i].getName()}](${this.enemies[i].getRarity()}) [Level ${this.enemies[i].getLevel()}]\n- Health: ${this.enemies[i].getStats().currHealth} / ${this.enemies[i].getStats().maxHealth} ${this.enemies[i].getStats().currHealth <= 0 ? '[DEAD]' : ''}\n`
     
         return creatures;
     }
@@ -429,7 +473,7 @@ module.exports = class FightController {
     EnemyTurn() {
         // For each enemy, attack the player
         for (let i = 0; i < this.enemies.length; i++) {
-            if (this.enemies[i].getCurrentHealth() > 0) {
+            if (this.enemies[i].getStats().currHealth > 0) {
                 let damageDone = this.enemies[i].Attack(this.player);
                 this.display.actionsTaken += `\n- ${this.enemies[i].getName()} dealt ${damageDone} damage to ${this.msg.author.username}`;
             }

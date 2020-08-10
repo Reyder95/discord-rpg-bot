@@ -1,11 +1,9 @@
 const Discord = require('discord.js');
 const database = require('./database');
-const stats = require('./stat_formulas');
 const Items = require('./items');
 const Gear = require('./gear/');
-const Player = require('./otherclasses/Player');
 const Weapons = require('./weapons/');
-const Enemies = require('./enemies/');
+const Entities = require('./entities/')
 const FightController = require('./otherclasses/FightController');
 const Spells = require('./spells/');
 const MySpell = require('./otherclasses/SpellBook');
@@ -158,8 +156,10 @@ const commands = {
     // Initiate a fight
     fight: async(msg, client) => {
         if (!fights[msg.author.id]) {
-            let playerGear = []
+            let playerGear = [];
             let knownSpells = [];
+            let playerInventory = [];
+            let enemies = []
         
             let playerWeapons = {
                 left: new Weapons["WoodenRapier"]
@@ -173,11 +173,9 @@ const commands = {
 
             let userSpellBook = new MySpell(knownSpells);
     
-            let player = new Player(250, 250, playerGear, playerWeapons, 10, userSpellBook, 25, 300, 300);
+            let player = new Entities["Player"](1, userSpellBook, 100, 100, playerGear, playerWeapons);
     
-            let enemies = []
-    
-            enemies.push(new Enemies["Goblin"]("Goblin", "test", 2, 200, 5, 200, "common"));
+            enemies.push(new Entities["Goblin"]());
     
             let fightController = new FightController(player, enemies, msg);
             

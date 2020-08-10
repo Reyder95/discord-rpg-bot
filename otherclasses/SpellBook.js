@@ -13,10 +13,10 @@ module.exports = class SpellBook {
         // Display the spellbook
         for (let i = 0; i < this.spells.length; i++) 
             spellList += `\n${i+1}. ${this.spells[i].getName()} (SP ${this.spells[i].getSpellpower()}) (MP ${this.spells[i].getMagickaCost()}) - ${this.spells[i].getDescription()}`
-            
+        
         // If we are in combat, edit the combat message.
         if (inCombat)
-            botMsg.edit(`\`\`\`md\n# ${msg.author.username}'s Spell Book\n<Magicka> ${player.getCurrentMagicka()} / ${player.getMaximumMagicka()}\n${spellList}\`\`\``);
+            botMsg.edit(`\`\`\`md\n# ${msg.author.username}'s Spell Book\n<Magicka> ${player.getStats().currentMagicka} / ${player.getStats().maximumMagicka}\n${spellList}\`\`\``);
     }
 
     getSpell(spellChoice) {
@@ -28,7 +28,7 @@ module.exports = class SpellBook {
         return new Promise((resolve, reject) => {
 
             // If the user has enough magicka for the spell we can proceed
-            if (spellUser.getCurrentMagicka() >= this.spells[spellChoice].getMagickaCost()) {
+            if (spellUser.getStats().currentMagicka >= this.spells[spellChoice].getMagickaCost()) {
 
                 // If it's a single target spell
                 if (this.spells[spellChoice].getType() == 'single') {
@@ -39,7 +39,7 @@ module.exports = class SpellBook {
                 
                     // For each enemy in our array, display them properly with their rarity, HP, name, and level
                     for (let i = 0; i < targets.length; i++)
-                        creatures += `${i+1}. [${targets[i].getName()}](${targets[i].getRarity()}) [Level ${targets[i].getLevel()}]\n- Health: ${targets[i].getCurrentHealth()} / ${targets[i].getMaximumHealth()} ${targets[i].getCurrentHealth() <= 0 ? '[DEAD]' : ''}\n`
+                        creatures += `${i+1}. [${targets[i].getName()}](${targets[i].getRarity()}) [Level ${targets[i].getLevel()}]\n- Health: ${targets[i].getStats().currHealth} / ${targets[i].getStats().maxHealth} ${targets[i].getStats().currHealth <= 0 ? '[DEAD]' : ''}\n`
 
                     // Filter for reaction collector to know what to react on
                     const filter = (reaction, user) => {

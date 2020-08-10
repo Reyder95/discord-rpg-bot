@@ -5,7 +5,7 @@ module.exports = class ItemBase {
         this.description = description;
     }
 
-    Use() {}
+    Use(user, targets) {}
 
     CombatOnly() {}
 

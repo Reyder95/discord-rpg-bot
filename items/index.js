@@ -1,4 +1,4 @@
 module.exports = {
     ItemBase: require('./itemBase'),
-    HealthPotion: require('./HealthPotion')
+    LesserHealthPotion: require('./LesserHealthPotion')
 }

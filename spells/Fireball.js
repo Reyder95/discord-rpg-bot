@@ -5,7 +5,7 @@ module.exports = class Fireball extends require('./SpellBase') {
         this.description = "Hurls a gigantic ball of fire that decimates one foe.";
         this.type = "single"
         this.spellpower = 100;
-        this.magickaCost = 130;
+        this.magickaCost = 30;
     }
 
     getSpellpower() {

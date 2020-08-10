@@ -54,6 +54,14 @@ module.exports = class Player {
         return this.stats.maximumMagicka;
     }
 
+    Heal(amount) {
+        this.stats.currHealth += amount;
+
+        if (this.stats.currHealth > this.stats.maxHealth) {
+            this.stats.currHealth = this.stats.maxHealth
+        }
+    }
+
     // Use a certain amount of magicka based on spell cost
     UseMagicka(cost) {
         this.stats.currentMagicka -= cost;
