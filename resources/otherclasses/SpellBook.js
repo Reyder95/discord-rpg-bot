@@ -1,5 +1,6 @@
+const Enums = require('../../helpers/enums')
 const { resolve, reject } = require("bluebird");
-const helper = require('../helper')
+const helper = require('../../helpers/helper')
 
 module.exports = class SpellBook {
     constructor(spells) {
@@ -31,7 +32,7 @@ module.exports = class SpellBook {
             if (spellUser.getStats().currentMagicka >= this.spells[spellChoice].getMagickaCost()) {
 
                 // If it's a single target spell
-                if (this.spells[spellChoice].getType() == 'single') {
+                if (this.spells[spellChoice].getType() == Enums.SPELLTYPE.SINGLE) {
 
                     // Base variable for creatures
                     let creatures = "";

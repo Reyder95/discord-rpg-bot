@@ -1,7 +1,7 @@
 // Base class for all gear types
 
 module.exports = class GearBase {
-    constructor(name, description, hasEffect, rarity, armorBonus, stat, statBonus) {
+    constructor(name, description, hasEffect, rarity, armorBonus, stat, statBonus, healthBonus) {
         this.name = name;
         this.description = description;
         this.hasEffect = hasEffect
@@ -9,6 +9,23 @@ module.exports = class GearBase {
         this.armorBonus = armorBonus;
         this.stat = stat;
         this.statBonus = statBonus;
+        this.healthBonus = healthBonus;
+    }
+
+    getName() {
+        return this.name;
+    }
+
+    getDescription() {
+        return this.description;
+    }
+
+    hasEffect() {
+        return this.hasEffect;
+    }
+
+    getRarity() {
+        return this.rarity;
     }
 
     // Retrieves the bonuses of a particular piece of equipment.
@@ -16,7 +33,8 @@ module.exports = class GearBase {
     getBonus() {
         return {
             stat: this.stat,
-            bonus: this.statBonus
+            bonus: this.statBonus,
+            health: this.healthBonus
         }
     }
     

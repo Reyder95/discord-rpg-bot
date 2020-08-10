@@ -1,12 +1,12 @@
 const Discord = require('discord.js');
 const database = require('./database');
-const Items = require('./items');
-const Gear = require('./gear/');
-const Weapons = require('./weapons/');
-const Entities = require('./entities/')
-const FightController = require('./otherclasses/FightController');
-const Spells = require('./spells/');
-const MySpell = require('./otherclasses/SpellBook');
+const Items = require('./resources/items');
+const Gear = require('./resources/gear/');
+const Weapons = require('./resources/weapons/');
+const Entities = require('./resources/entities/')
+const FightController = require('./resources/otherclasses/FightController');
+const Spells = require('./resources/spells/');
+const MySpell = require('./resources/otherclasses/SpellBook');
 
 const fights = {};
 
@@ -173,8 +173,9 @@ const commands = {
 
             let userSpellBook = new MySpell(knownSpells);
     
-            let player = new Entities["Player"](1, userSpellBook, 100, 100, playerGear, playerWeapons);
+            let player = new Entities["Player"](10, userSpellBook, null, null, playerGear, playerWeapons);
     
+            enemies.push(new Entities["Goblin"]());
             enemies.push(new Entities["Goblin"]());
     
             let fightController = new FightController(player, enemies, msg);

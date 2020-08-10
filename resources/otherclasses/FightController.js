@@ -1,6 +1,7 @@
 // The controller that handles combat between players and monsters
 const Discord = require('discord.js')
-const helper = require('../helper');
+const helper = require('../../helpers/helper');
+const Enums = require('../../helpers/enums');
 
 // Handles the different states battle can be in
 const STATES = {
@@ -71,7 +72,7 @@ module.exports = class FightController {
         let noMagicka = false;    // If the user doesn't have enough magicka for the previous spell they tried to use
 
         // While nobody has lost or won, continue looping
-        while (this.state != STATES.LOSE && this.state != STATES.WIN && this.state != STATES.RUN) {
+        while (this.state != Enums.FIGHTSTATES.LOSE && this.state != Enums.FIGHTSTATES.WIN && this.state != Enums.FIGHTSTATES.RUN) {
 
             // We don't want to change state if we're moving back to this window from somewhere else. (showing the window or hitting the back button)
             if (!back && !show) {
@@ -81,9 +82,7 @@ module.exports = class FightController {
             back = false;    // Always double check back is set to false after NextState
 
             // If it is player's state ...
-            if (this.state == STATES.PLAYER) {
-
-
+            if (this.state == Enums.FIGHTSTATES.PLAYER) {
 
                 await this.DisplayCombat(noMagicka)    // Display the combat information
                 .catch(err => {
@@ -165,25 +164,25 @@ module.exports = class FightController {
                         back = true    // If we're just re-displaying the window we don't want any actions to happen so we set this to true
                 })
             }
-            else if (this.state == STATES.ENEMY)    // Else if it's the enemy's turn
+            else if (this.state == Enums.FIGHTSTATES.ENEMY)    // Else if it's the enemy's turn
                 
                 await this.EnemyTurn();    // Allow the enemy to do their turn
         }
 
         // If we won, display that we killed all of the enemies.
-        if (this.state == STATES.WIN) {
+        if (this.state == Enums.FIGHTSTATES.WIN) {
             this.display.actionsTaken += `\n+ ${this.msg.author.username} killed all of the enemies.`;
             this.DisplayCombat();
             this.msg.reply('Congratulations, you won the fight!')
         }
 
         // If we lost, say that we died.
-        else if (this.state == STATES.LOSE) {
+        else if (this.state == Enums.FIGHTSTATES.LOSE) {
             this.msg.reply('You died!')
         }
 
         // If we are running
-        else if (this.state == STATES.RUN)
+        else if (this.state == Enums.FIGHTSTATES.RUN)
             this.msg.reply(`You've successfully run from the fight`)
 
     }
@@ -195,13 +194,13 @@ module.exports = class FightController {
         if (this.enemiesDead < this.enemies.length && this.player.getStats().currHealth > 0) {
             switch(this.state) {
                 case null:
-                    this.state = STATES.PLAYER
+                    this.state = Enums.FIGHTSTATES.PLAYER
                     break;
-                case STATES.PLAYER:
-                    this.state = STATES.ENEMY
+                case Enums.FIGHTSTATES.PLAYER:
+                    this.state = Enums.FIGHTSTATES.ENEMY
                     break;
-                case STATES.ENEMY:
-                    this.state = STATES.PLAYER
+                case Enums.FIGHTSTATES.ENEMY:
+                    this.state = Enums.FIGHTSTATES.PLAYER
                     break;
             }
         }
@@ -209,11 +208,11 @@ module.exports = class FightController {
 
             // If the player died, set the state to lose
             if (this.player.getStats().currHealth <= 0)
-                this.state = STATES.LOSE;
+                this.state = Enums.FIGHTSTATES.LOSE;
 
             // If the enemy died, set the state to win
             else if (this.enemiesDead >= this.enemies.length)
-                this.state = STATES.WIN;
+                this.state = Enums.FIGHTSTATES.WIN;
         }
 
         

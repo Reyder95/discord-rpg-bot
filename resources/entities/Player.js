@@ -1,4 +1,4 @@
-const formulas = require('../formulas');
+const formulas = require('../../formulas');
 
 // The player character
 
@@ -30,11 +30,17 @@ module.exports = class Player extends require('./EntityBase') {
             for (let i = 0; i < this.gear.length; i++) {
                 this.stats[this.gear[i].getBonus().stat] = this.stats[this.gear[i].getBonus().stat] + this.gear[i].getBonus().bonus;
                 this.stats.armor += this.gear[i].getArmorBonus();
+                this.stats.maxHealth += this.gear[i].getBonus().health;
             }
+        if (this.stats.currHealth == null)
+            this.stats.currHealth = this.stats.maxHealth
         
         this.stats.armor = formulas.armor(this.level, this.stats.strength);
         this.stats.spellresist = formulas.spellresist(this.level, this.stats.intelligence);
         this.stats.maximumMagicka = formulas.magicka(this.level, this.stats.intelligence);
+
+        if (this.stats.currentMagicka == null)
+            this.stats.currentMagicka = this.stats.maximumMagicka;
     }
 
     // Uses a certain amount of magicka
