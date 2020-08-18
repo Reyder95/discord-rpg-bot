@@ -1,4 +1,5 @@
-# Discord RPG
+# Discord RPG (discontinued)
+**Note: This bot is being changed into an actual game. Repository going up today, being built in the Godot engine. Will still keep this repo for anyone wanting to learn from it**
 Welcome to my first Discord bot! This bot is really just for me to tinker with things, but on the off chance people like the bot I'll decide to do more with it.
 
 ## Useful Links
